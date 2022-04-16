@@ -11,9 +11,9 @@ pip install tweepy
 
 - [x] Post tweets(with images)
 - [x] Delete tweets
-- [ ] Show time line
-- [ ] Like tweets
-- [ ] Reply tweets
+- [x] Show time line
+- [x] Like tweets
+- [x] Reply tweets
 - [ ] Send Direct message
 - [ ] Reply Direct message
 - [ ] And more...
