@@ -4,13 +4,19 @@ import json
 import argparse
 
 parser = argparse.ArgumentParser(description='Twitter CLI')
-parser.add_argument('-t', type=str, default=None, help='Text of the tweet you want to send. ')
+parser.add_argument('-post', type=str, default=None, help='Text of the tweet you want to send. ')
 parser.add_argument('-img', type=str, default=None, help='One image attached to your tweet (optional). ')
+parser.add_argument('-tl', help='Get timeline', action='store_true')
+parser.add_argument('-mo', help='Get montions timeline', action='store_true')
 parser.add_argument('-delete', type=str, default=None, help='Provide a tweet id and del the tweet. ')
+parser.add_argument('-reply', type=str, default=None, help='Provide a tweet id and reply to the tweet. ')
+parser.add_argument('-like', type=str, default=None, help='Provide a tweet id and like the tweet. ')
 args = parser.parse_args()
-t_text = args.t
+t_text = args.post
 t_image = args.img
 t_del = args.delete
+t_reply = args.reply
+t_like = args.like
 
 # Proxy settings(optional)
 #os.environ["http_proxy"] = "http://127.0.0.1:10809"
@@ -78,6 +84,12 @@ def show_mentions_timeline():
             'Status id:\033[92m' + tweet.id_str + '\033[0m\n@' + tweet.user.screen_name + ':\n' + tweet.text + '\n===============')
 
 
+def return_newest_post_id():
+    public_tweets = api.user_timeline(count=1, trim_user='ture')
+    for tweets in public_tweets:
+        return tweets.id_str
+
+
 def reply_the_newest_mention(reply_text):
     public_tweets = api.mentions_timeline(count=1, trim_user='ture')
     for tweets in public_tweets:
@@ -86,34 +98,39 @@ def reply_the_newest_mention(reply_text):
         api.update_status(status=reply_text, in_reply_to_status_id=tweets.id)
 
 
-def post_tweet(text):
-    api.update_status(text)
-
-
-def post_tweet_with_media(text, media_file):
-    api.update_status_with_media(status=text, filename=media_file)
-
-
-def del_tweet(tweet_id):
-    api.destroy_status(tweet_id)
+def reply_tweet(reply_text, tweet_id, img_path):
+    public_tweet = api.get_status(id=tweet_id, trim_user='ture')
+    reply_text = '@' + public_tweet.user.screen_name + ' ' + reply_text
+    if img_path == None:
+        api.update_status(status=reply_text, in_reply_to_status_id=tweet_id)
+    else:
+        api.update_status_with_media(filename=img_path, status=reply_text, in_reply_to_status_id=tweet_id)
 
 
 # Functions definitions end
 
-if t_text == None and t_del == None and t_image == None:
-    print('\033[31mError\033[0m:Invalid input. ')
-else:
-    if not t_del == None:
-        print('\033[31mDelete tweet\033[0m:\033[92m' + t_del + '\033[0m')
-        del_tweet(t_del)
+if args.tl:
+    show_my_timeline()
+
+if args.mo:
+    show_mentions_timeline()
+
+if not t_del == None:
+    print('\033[31mDelete tweet\033[0m:\033[92m' + t_del + '\033[0m')
+    api.destroy_status(t_del)
+
+if not t_text == None:
+    if t_image == None:
+        api.update_status(t_text)
+        if not t_reply == None:
+            reply_tweet(t_text, t_reply, None)
+        print('\033[92mInfo\033[0m:Tweet without images.\n\033[92mTweet ID\033[0m:' + return_newest_post_id())
     else:
-        if t_text == None:
-            print('\033[31mError\033[0m:No Twitter contents')
-            exit()
-        else:
-            if t_image == None:
-                print('\033[92mInfo\033[0m:Tweet without images. ')
-                post_tweet(t_text)
-            else:
-                print('\033[92mInfo\033[0m:Tweet with images. ')
-                post_tweet_with_media(t_text, t_image)
+        api.update_status_with_media(status=t_text, filename=t_image)
+        if not t_reply == None:
+            reply_tweet(t_text, t_reply, t_image)
+        print('\033[92mInfo\033[0m:Tweet with images.\n\033[92mTweet ID\033[0m:' + return_newest_post_id())
+
+if not t_like == None:
+    print('\033[31mLike tweet\033[0m:\033[92m' + t_like + '\033[0m')
+    api.create_favorite(id=t_like)
