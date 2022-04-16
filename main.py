@@ -11,16 +11,22 @@ parser.add_argument('-mo', help='Get montions timeline', action='store_true')
 parser.add_argument('-delete', type=str, default=None, help='Provide a tweet id and del the tweet. ')
 parser.add_argument('-reply', type=str, default=None, help='Provide a tweet id and reply to the tweet. ')
 parser.add_argument('-like', type=str, default=None, help='Provide a tweet id and like the tweet. ')
+parser.add_argument('-unlike', type=str, default=None, help='Provide a tweet id and unlike the tweet. ')
+parser.add_argument('-rt', type=str, default=None, help='Provide a tweet id and retweet the tweet. ')
+parser.add_argument('-unrt', type=str, default=None, help='Provide a tweet id and unretweet the tweet. ')
 args = parser.parse_args()
 t_text = args.post
 t_image = args.img
 t_del = args.delete
 t_reply = args.reply
 t_like = args.like
+t_unlike = args.unlike
+t_rt = args.rt
+t_unrt = args.unrt
 
 # Proxy settings(optional)
-#os.environ["http_proxy"] = "http://127.0.0.1:10809"
-#os.environ["https_proxy"] = "http://127.0.0.1:10809"
+os.environ["http_proxy"] = "http://127.0.0.1:10809"
+os.environ["https_proxy"] = "http://127.0.0.1:10809"
 # Proxy settings end
 
 app_config_file = 'app.config.json'
@@ -121,16 +127,30 @@ if not t_del == None:
 
 if not t_text == None:
     if t_image == None:
-        api.update_status(t_text)
         if not t_reply == None:
             reply_tweet(t_text, t_reply, None)
+        else:
+            api.update_status(t_text)
         print('\033[92mInfo\033[0m:Tweet without images.\n\033[92mTweet ID\033[0m:' + return_newest_post_id())
     else:
-        api.update_status_with_media(status=t_text, filename=t_image)
         if not t_reply == None:
             reply_tweet(t_text, t_reply, t_image)
+        else:
+            api.update_status_with_media(status=t_text, filename=t_image)
         print('\033[92mInfo\033[0m:Tweet with images.\n\033[92mTweet ID\033[0m:' + return_newest_post_id())
 
 if not t_like == None:
     print('\033[31mLike tweet\033[0m:\033[92m' + t_like + '\033[0m')
     api.create_favorite(id=t_like)
+
+if not t_unlike == None:
+    print('\033[31mUnlike tweet\033[0m:\033[92m' + t_unlike + '\033[0m')
+    api.destroy_favorite(id=t_unlike)
+
+if not t_rt == None:
+    print('\033[31mRetweet\033[0m:\033[92m' + t_rt + '\033[0m')
+    api.retweet(t_rt)
+
+if not t_unrt == None:
+    print('\033[31mUnretweet\033[0m:\033[92m' + t_unrt + '\033[0m')
+    api.unretweet(t_unrt)
